@@ -10,12 +10,12 @@ description: "Within this document are the answers for all the labs and breakout
 
 <!--chapter:end:index.Rmd-->
 
-# The pool of tears
+# Lab 1 
 
 
 <!--chapter:end:02-tears.Rmd-->
 
-# A caucus-race and a long tale
+# Lab 2 
 
 <!--chapter:end:03-race.Rmd-->
 
