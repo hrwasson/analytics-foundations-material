@@ -3,7 +3,7 @@ title: "Analytics Foundations Materials"
 author: "Hannah Wasson"
 date: "`r Sys.Date()`"
 site: bookdown::bookdown_site
-description: "Within this document are the answers for all the labs and breakout sessions for Analytics Foundations"
+description: "Within this document are the answers for all the labs and breakout sessions for Analytics Foundations. Each section is a different lab/breakout session. "
 ---
 
 ---
