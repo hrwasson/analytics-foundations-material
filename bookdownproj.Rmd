@@ -6,19 +6,6 @@ site: bookdown::bookdown_site
 description: "Within this document are the answers for all the labs and breakout sessions for Analytics Foundations"
 ---
 
-
-
-<!--chapter:end:index.Rmd-->
-
-# Lab 1 
-
-
-<!--chapter:end:02-tears.Rmd-->
-
-# Lab 2 
-
-<!--chapter:end:03-race.Rmd-->
-
 ---
 title: "Lab1_AF"
 author: "Hannah Wasson"
