@@ -3,50 +3,7 @@ title: "Analytics Foundations Materials"
 author: "Hannah Wasson"
 date: "`r Sys.Date()`"
 site: bookdown::bookdown_site
+description: "Within this document are the answers for all the labs and breakout sessions for Analytics Foundations"
 ---
-
-# Lab 1
-
-# Breakout Session 1 
-
-# Lab 2
-
-# Breakout Session 2
-
-# Lab 3
-
-# Breakout Session 3
-
-# Lab 4
-
-# Breakout Session 4 
-
-# Lab 5
-
-# Breakout Session 5
-
-# Lab 6
-
-# Breakout Session 6 
-
-# Lab 7
-
-# Breakout Session 7
-
-# Lab 8
-
-# Breakout Session 8
-
-# Lab 9
-
-# Breakout Session 9
-
-# Lab 10
-
-# Breakout Session 10 
-
-# Lab 11
-
-# Breakout Session 11 
 
 

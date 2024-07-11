@@ -1,0 +1,179 @@
+---
+title: "af_lab_10"
+author: "Hannah Wasson"
+date: "2024-07-10"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+# Complete Example
+
+## Provide your best LINEAR model for the Ames Housing data set. You should use your train data set to create the best model.  You cannot have more than 12 variables in the model (this includes polynomial terms and interaction terms).  ONLY one submission per team (if I see more than one, your team will NOT get credit for the assignment).
+
+```{r}
+library(tidyverse)
+library(ggplot2)
+library(AmesHousing)
+library(estimatr)
+ames <- make_ordinal_ames()
+```
+
+```{r}
+set.seed(123)
+#ames <- ames %>% mutate(id = row_number())
+#train <- ames %>% sample_frac(0.7)
+#test <- anti_join(ames, train, by = "id")
+```
+
+```{r}
+summary(train)
+names<- colnames(train)
+numeric_data <- ames[, sapply(ames, is.numeric)]
+cor_matrix <- cor(numeric_data)
+names
+```
+Took out Gr_Liv_Area and it lowered all VIFs
+
+full_model <- lmSale_Price ~ (Year_Built + TotRms_AbvGrd + Year_Remod_Add + Mas_Vnr_Area + First_Flr_SF  + Full_Bath  + Fireplaces + Garage_Area + Wood_Deck_SF + Open_Porch_SF, data = train)
+
+```{r}
+empty_model <- lm(Sale_Price ~ 1, data = train)
+full_model <- lm(Sale_Price ~ (Year_Built + TotRms_AbvGrd + Year_Remod_Add + Mas_Vnr_Area + First_Flr_SF  + Full_Bath  + Fireplaces + Garage_Area + Wood_Deck_SF + Open_Porch_SF + House_Style + Bldg_Type), data = train)
+for_model <- step(empty_model, 
+                  scope = list(lower = empty_model, 
+                               upper = full_model), 
+                  direction = "both", k = qchisq(0.003, 1, lower.tail =  FALSE))
+
+vif(for_model)
+```
+
+```{r}
+#summary(for_model)
+#plot(for_model)
+#shapiro.test(for_model$residuals)
+#boxcox(for_model)
+pairs(train[, c('Sale_Price','Year_Built', 'TotRms_AbvGrd', 'Year_Remod_Add', 'Mas_Vnr_Area', 'First_Flr_SF', 'Full_Bath' , 'Fireplaces' , 'Garage_Area' , 'Wood_Deck_SF',  'Open_Porch_SF')])
+
+Year_Built.c <- scale(train$Year_Built, scale = FALSE)
+
+mod_1 <- lm(Sale_Price ~ Garage_Area + First_Flr_SF + Year_Remod_Add + Mas_Vnr_Area + 
+    Fireplaces + TotRms_AbvGrd + Year_Built.c + I(Year_Built.c^2) + Wood_Deck_SF + 
+    Full_Bath + Open_Porch_SF, data = train)
+
+
+
+#plot(mod_1)
+#summary(mod_1)
+#boxcox(mod_1)
+
+# robust - draws in variance if variance is changingi 
+mod_2 <- lm_robust(Sale_Price ~ Lot_Area + First_Flr_SF + Year_Remod_Add + Mas_Vnr_Area + 
+    Fireplaces + TotRms_AbvGrd + Year_Built.c + I(Year_Built.c^2) + Wood_Deck_SF + 
+    Full_Bath + Open_Porch_SF + Overall_Qual, data = train, se_type = "HC1")
+
+summary(mod_2)
+
+fitted_values_mod2 <- mod_2$fitted.values
+residuals_mod2 <- (fitted_values_mod2 - train$Sale_Price)
+df <- data.frame(fitted_values_mod2, residuals_mod2)
+
+#dim(df)
+ggplot(data = df, aes(x = fitted_values_mod2, y = residuals_mod2)) + geom_point()
+ggplot(data = df, aes(x = residuals_mod2)) + geom_histogram()
+ggplot(data = df, aes(sample = residuals_mod2)) + geom_qq() + geom_qq_line()
+
+#ggplot(mod_2, aes(x = .fitted, y = residuals_mod2)) + geom_point() + geom_hline(yintercept = 0)
+```
+```{r}
+hat.cut=2*(length(coefficients(mod_2)))/nrow(train)
+n.index=seq(1,nrow(train)) 
+ggplot(mod_2,aes(x=n.index,y =hatvalues(mod_2)))+geom_point(color="blue")+geom_line(y=hat.cut)+labs(title = "Hat values",x="Observation",y="Hat Values") 
+
+ggplot(mod_2,aes(x=hatvalues(mod_2),y=rstudent(mod_2)))+geom_point(color="orange")+geom_line(y=-3)+geom_line(y=3)+labs(title = "External Studentized Residuals",x="Hat values",y="Residuals") + geom_vline(xintercept = hat.cut)
+```
+
+
+We found a negative sales price 
+
+```{r}
+
+First_Flr_SF.c <- scale(train$First_Flr_SF, scale = FALSE)
+
+mod_4 <- lm_robust(Sale_Price ~ I(Year_Built.c^3)  + I(Year_Built.c^2) + Year_Built.c + TotRms_AbvGrd + Year_Remod_Add + Mas_Vnr_Area + First_Flr_SF.c + I(First_Flr_SF.c^2)  + Full_Bath  + Fireplaces + Garage_Area + Wood_Deck_SF + Open_Porch_SF + House_Style + Bldg_Type, data = train, se_type = "HC2")
+
+fitted_values_mod4 <- mod_4$fitted.values
+residuals_mod4 <- (fitted_values_mod4 - train$Sale_Price)
+df_4 <- data.frame(fitted_values_mod4, residuals_mod4)
+
+pairs(train[, c('Sale_Price','Year_Built', 'TotRms_AbvGrd', 'Year_Remod_Add', 'Mas_Vnr_Area', 'First_Flr_SF', 'Full_Bath' , 'Fireplaces' , 'Garage_Area' , 'Wood_Deck_SF',  'Open_Porch_SF' , 'House_Style', 'Bldg_Type')])
+
+ggplot(data = df_4, aes(x = fitted_values_mod4, y = residuals_mod4)) + geom_point()
+ggplot(data = df_4, aes(x = residuals_mod4)) + geom_histogram()
+ggplot(data = df_4, aes(sample = residuals_mod4)) + geom_qq() + geom_qq_line()
+
+summary(mod_4)
+
+#boxcox(mod_4)
+```
+```{r}
+mod_5 <- lm(Sale_Price ~ Garage_Area + First_Flr_SF + Year_Remod_Add + House_Style + 
+    Year_Built + Mas_Vnr_Area + Fireplaces + Bldg_Type + Wood_Deck_SF + 
+    TotRms_AbvGrd, data = train)
+
+summary(mod_5)
+plot(mod_5)
+shapiro.test(mod_5$residuals)
+```
+
+mod_6 <- lm(log(Sale_Price) ~ Lot_Area + Year_Built + Bldg_Type + Overall_Cond + Foundation + Central_Air + Gr_Liv_Area + Full_Bath + Neighborhood + Sale_Condition + Functional , data = train)
+
+```{r}
+Gr_Liv_Area.c <- scale(train$Gr_Liv_Area, scale = FALSE)
+
+mod_6 <- lm(log(Sale_Price) ~ Lot_Area + Year_Built + Bldg_Type + Overall_Cond + Foundation + Central_Air + Gr_Liv_Area + Full_Bath + Neighborhood + Sale_Condition + Functional , data = train)
+
+mod_7 <- lm(log(Sale_Price) ~ Lot_Area + Year_Built + Bldg_Type + Overall_Cond + Foundation + Central_Air + Gr_Liv_Area.c + I(Gr_Liv_Area.c ^ 2) + Full_Bath + Neighborhood + Sale_Condition + Functional , data = train)
+
+plot(mod_6)
+vif(mod_6)
+shapiro.test(mod_6$residuals)
+
+```
+
+```{r}
+
+mod_7 <- lm(Sale_Price ~ Bldg_Type + Lot_Area + Foundation + Central_Air + Gr_Liv_Area + Full_Bath + Neighborhood + Overall_Qual, data = train)
+
+vif(mod_7)
+summary(mod_7)
+plot(mod_7)
+shapiro.test(mod_7$residuals)
+boxcox(mod_7)
+```
+
+
+
+```{r}
+amelot.c <- scale (ameTrain$Lot_Area, scale = F)
+greater.c <- scale (ameTrain$Gr_Liv_Area, scale = F)model <- lm(sqrt(Sale_Price) ~ Lot_Area + I(amelot.c^2) + Bldg_Type + Overall_Qual + Neighborhood + Foundation + Central_Air + Gr_Liv_Area + I(greater.c^2) + I(greater.c^3) + I(greater.c^4), data = ameTrain)print(shapiro.test(model$residuals))
+summary(model)
+plot(model)
+```
+
+# Final Model 
+
+```{r}
+mod_6 <- lm(log(Sale_Price) ~ Lot_Area + Year_Built + Bldg_Type + Overall_Cond + Foundation + Central_Air + Gr_Liv_Area + Full_Bath + Neighborhood + Sale_Condition + Functional , data = train)
+plot(mod_6)
+
+
+hat.cut=2*(length(coefficients(mod_6)))/nrow(train)
+n.index=seq(1,nrow(train)) 
+ggplot(mod_6,aes(x=n.index,y =hatvalues(mod_6)))+geom_point(color="blue")+geom_line(y=hat.cut)+labs(title = "Hat values",x="Observation",y="Hat Values") 
+
+ggplot(mod_6,aes(x=hatvalues(mod_6),y=rstudent(mod_6)))+geom_point(color="orange")+geom_line(y=-3)+geom_line(y=3)+labs(title = "External Studentized Residuals",x="Hat values",y="Residuals") + geom_vline(xintercept = hat.cut)
+
+```
+

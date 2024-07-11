@@ -1,0 +1,93 @@
+---
+title: "Lab1_AF"
+author: "Hannah Wasson"
+date: "2024-06-25"
+output: html_document
+---
+
+#Installing and using normtemp package to answer questions... 
+
+```{r}
+#install.packages('UsingR')
+library(UsingR)
+data(normtemp)
+```
+
+Use the normtemp dataset to answer the following:
+a. Determine the following statistics for the variable temperature:
+b. Does temperature appear to be normally distributed? no. 
+
+```{r}
+library(ggplot2)
+
+min(normtemp$temperature)
+max(normtemp$temperature)
+mean(normtemp$temperature)
+sd(normtemp$temperature)
+ggplot(data = normtemp, aes(x = temperature)) + geom_histogram()
+```
+
+c. Create box plots for temperature. Are there any outliers? Display
+a reference line at 98.6
+Does the median body temperature seem to be 98.6 degrees? yes. 
+
+
+```{r}
+ggplot(data = normtemp, aes(x = temperature)) + geom_boxplot()+ geom_vline(xintercept=98.6) 
+```
+Using the Ameshousing dataset from our in-class examples, run some
+distributional analysis on Sale_Price, Log(Sale_Price), and Gr_Liv_Area.
+a. Create histograms of these three variables.
+- Overlay a kernel density estimator of the variables.
+
+```{r}
+library(AmesHousing)
+ames <- make_ordinal_ames()
+
+ggplot(data = ames, aes(x = Sale_Price)) + geom_histogram(aes(y=..density..), fill = 'lightblue') + geom_density()
+
+ggplot(data = ames, aes(x = log(Sale_Price))) + geom_histogram(aes(y=..density..), fill = 'orange') + geom_density()
+
+ggplot(data = ames, aes(x = Gr_Liv_Area)) + geom_histogram(aes(y=..density..), fill = 'lightgreen') + geom_density()
+
+
+
+```
+
+
+b. Create a QQ Plot for both Sale_Price and Log(Sale_Price). Based on
+these exploratory procedures, which version of the price information
+(Sale_Price or Log(Sale_Price)) would you say is closer to being normally
+distributed?
+
+```{r}
+ggplot(data = ames, aes(sample = Sale_Price), color = 'lightblue') + geom_qq() + stat_qq() + stat_qq_line() + labs(title = 'Sales Price QQ Plot')
+ggplot(data = ames, aes(sample = log(Sale_Price)), color = 'orange') + geom_qq() + stat_qq() + stat_qq_line()+ labs(title = 'log(Sales Price) QQ Plot')
+ggplot(data = ames, aes(sample = Gr_Liv_Area), color = 'lightgreen') + geom_qq() + stat_qq() + stat_qq_line()+ labs(title = 'Gr_Liv_Area QQ Plot')
+```
+
+log(Sale_Price) is the closest to being normally distributed. 
+
+
+# Using the Ameshousing dataset from our in-class examples, determine the
+# following:
+
+a. What type of variables are each of these columns (Nominal, Ordinal, or
+Continuous/Quantitative)? Keep in mind that the way they are
+represented in the R dataset may not be appropriate, so you should make
+this determination using your own judgement based on the data you are
+looking at.
+- Overall_Qual -- Ordinal 
+- Lot_Shape --  Ordinal
+- Heating_QC -- Ordinal
+- Lot_Area -- Quantitative
+
+
+```{r}
+str(ames$Overall_Qual)
+str(ames$Lot_Shape)
+str(ames$Heating_QC)
+str(ames$Lot_Area)
+
+```
+

@@ -1,0 +1,58 @@
+---
+title: "af_lab_8"
+author: "Hannah Wasson"
+date: "2024-07-08"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r}
+cafe <- read.csv('~/Documents/lab8.csv')
+str(cafe)
+library(ggplot2)
+```
+## 1. Perform a simple linear regression with Sales as the response and Dispensers as the predictor variable. What do you see in the residual versus predicted plot? What would you do to fix this problem?
+
+There is a quadratic relationship 
+
+```{r}
+disp.s <- scale(cafe$Dispensers, scale = F)
+lm <- lm(Sales ~ Dispensers, data = cafe)
+lm.q <- lm(Sales ~ I(disp.s ^ 2) + disp.s, data = cafe)
+
+plot(lm)
+plot(lm.q)
+```
+## 2. Perform a forward selection (by hand) using the AIC criteria (you will need to use the command AIC(model) to get the AIC values for each model). The “smallest” model should be the just the intercept. The “biggest” model should be Dispensers up to the power of 4 (be sure to follow model hierarchy). What was the best degree for the polynomial based on AIC?
+
+```{r}
+lm.cub <- lm(Sales ~ I(disp.s ^ 3) + I(disp.s ^ 2) + disp.s, data = cafe)
+lm.poly <- lm(Sales ~ I(disp.s ^ 4) + I(disp.s ^ 3) + I(disp.s^2) + disp.s, data = cafe)
+
+
+AIC(lm)
+AIC(lm.q)
+AIC(lm.cub)
+AIC(lm.poly)
+
+```
+## 3. Run the model you selected in #2 and look at the residual versus predicted plot. What do you see?
+
+### a. Does the residual plot look random?
+
+Yes, the residual plot seems to look random with equal variance 
+
+### b. Does the assumption of homoscedasticity of the variance appear to hold here?
+
+Yes, according to visual there seems to be homoscedasicity and verifying using Spearman Rank Sum test, we fail to reject the null hypothesis and conclude that there is a linear association in the model. 
+
+```{r}
+ggplot(data = lm.q, aes(x = .fitted, y = .resid)) + geom_point(color = 'purple') + geom_hline(yintercept = 0) 
+
+cor.test(abs(resid(lm.q)), fitted.values(lm.q), method = 'spearman', exact = T)
+
+```
+

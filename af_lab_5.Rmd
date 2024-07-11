@@ -1,0 +1,118 @@
+---
+title: "af_lab_5"
+author: "Hannah Wasson"
+date: "2024-07-01"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+
+# Questions
+
+## 1. Data were collected in an effort to determine whether different dose levels of a given drug have an effect on blood pressure for people with one of three types of heart disease. To obtain this data, submit the following code:
+
+```{r}
+library(tidyverse)
+library(dplyr)
+library(ggplot2)
+library(viridis)
+library(RColorBrewer)
+library(purrr)
+drug <- read.csv('https://raw.githubusercontent.com/IAA-Faculty/statistical_foundations/master/drug.csv')
+str(drug)
+```
+
+### a. Examine the data with a side by side bar chart. Put BloodP on the Y axis, DrugDose on the X axis, and stratify by Disease. What information can you obtain from looking at the data?
+
+y is the mean of blood pressure because you are stratifying by disease!!
+
+
+```{r}
+
+drug_plot <- drug %>% 
+  group_by(DrugDose, Disease) %>%
+  dplyr::summarise(mean = mean(BloodP), 
+                   sd = sd(BloodP), 
+                   max = max(BloodP), 
+                   min = min(BloodP))
+
+# Use the grouped data to plot the side-by-side bar chart for change in blood pressure
+ggplot(data = drug_plot, aes(x = DrugDose, y = mean, fill = Disease)) +
+  geom_bar(stat = "identity", position = position_dodge()) +
+  labs(y = "Change in Blood Pressure", x = "Drug Dose Category") +
+  scale_fill_brewer(palette = "Paired") +
+  theme_minimal()
+
+```
+
+### b. Run a 2-Way ANOVA, making sure to include an interaction term if the graphical analyses that you performed previously indicate that might be advisable (HINT: Make sure DrugDose is a factor in your model since it is stored as a number). What conclusions can you reach at this point?
+
+The interaction between DrugDose on BloodP is influenced by the interaction of disease. The interaction of DrugDose and Disease is influenced by the BloodP.
+
+```{r}
+aov_drug <- aov(BloodP ~ DrugDose * factor(Disease), data = drug)
+summary(aov_drug)
+```
+
+### c. If an interaction is required in the previous piece, investigate the differences in drug dose by performing a sliced ANOVA across the levels of heart disease.
+
+ Different diseases have an impact on how drug dose impacts blood pressure. 
+
+```{r}
+slice_aov_drug <- drug %>%
+  group_by(Disease) %>%
+  nest()%>%
+  mutate(aov = map(data, ~summary(aov(BloodP ~ DrugDose, data = .x))))
+
+print(slice_aov_drug$aov)
+
+```
+
+### 2. A computer service center has four technicians who specialize in repairing three brands of computer disk drives for desktop computers. The service center wants to study the effects of the technician and brand of the disk drive on the service time. To obtain this data, submit the following code:
+
+```{r}
+disks <- read.csv('https://raw.githubusercontent.com/IAA-Faculty/statistical_foundations/master/disks.csv')
+str(disks)
+```
+
+### a. Generate a 2-Way ANOVA with Time as the dependent variable and Technician and Brand as the independent variables (HINT: Make sure Brand is a factor in your model since it is stored as a number). Include the interaction between the independent variables in your model. Assume a level of significance of 0.05. Is the overall F test significant in your model? Is there a significant interaction?
+
+At an alpha level of 0.05 we would reject the null hypothesis and conclude that the interaction between technician and time is influenced by the brand and vice versa.
+
+
+```{r}
+
+aov_disks <- aov(Time ~ Technician * factor(Brand), data = disks)
+summary(aov_disks)
+
+
+
+```
+
+### b. Is it appropriate to examine the tests for the main effects shown in the output?
+
+No, it is not because once you're interaction term is significant, you don't pay attention to any other effects within the model. 
+
+### c. Determine whether there are differences between the technicians for each brand of disk drive using sliced ANOVA across the brands of disk drives. Also, examine the Tukey HSD among the values of Technician within each slice of Brand. What are your conclusions?
+
+```{r}
+brand_aov <- disks %>%
+  group_by(Brand) %>%
+  nest() %>%
+  mutate(aov = map(data, ~summary(aov(Time ~ Technician, data = .x))))
+
+print(brand_aov$aov)
+
+brand_aov_2 <- disks %>%
+  group_by(Brand) %>%
+  nest() %>%
+  mutate(aov = map(data, ~aov(Time ~ Technician, data = .x)), tukey = map(aov, ~TukeyHSD(.)))
+
+print(brand_aov_2$tukey)
+
+```
+

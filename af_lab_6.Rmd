@@ -1,0 +1,120 @@
+---
+title: "af_lab_6"
+author: "Hannah Wasson"
+date: "2024-07-03"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# Multiple Linear Regression Lab 6
+
+## Cars Dataset (Question 1): 
+
+This dataset has variables pertaining to fuel economy of various cars. Do not create a training and test set. Just use the whole cars2010 dataset for the following analysis. The cars2011 and cars2012 datasets will be used at later time periods
+
+Perform the following analysis:
+
+```{r}
+library(AppliedPredictiveModeling)
+data(FuelEconomy)
+cars <- cars2010
+
+str(cars)
+```
+
+
+### a. Run a regression predicting the FE variable using all the remaining variables. Some of these predictor variables are coded as numeric, but should be treated as categorical. The only numeric variables in your dataset should be EngDispl. All remaining variables are categorical.
+
+```{r}
+cars_mlr_1 <- lm(FE ~ EngDispl + factor(NumCyl) + factor(Transmission) + factor(AirAspirationMethod) + factor(NumGears) + factor(TransLockup) + factor(TransCreeperGear) + factor(DriveDesc) + factor(IntakeValvePerCyl) + factor(ExhaustValvesPerCyl) + factor(CarlineClassDesc) + factor(VarValveTiming) + factor(VarValveLift), data = cars)
+
+summary(cars_mlr_1)
+
+
+```
+
+#### a. Perform a Global F-test. What is your conclusion?
+
+The global F-test is: 
+F-statistic: 95.55 on 55 and 1051 DF,  p-value: < 2.2e-16
+
+Reject the null and conclude that at least one of the variables has a Beta that is significantly different than 0. 
+
+#### b. What percent of variation in fuel economy (FE) is explained by these 13 variables?
+
+Multiple R-squared:  0.8333
+
+With a R-Squared of 0.8333 this means that 83.33% of the variation in fuel economy (FE) is explained by the 13 variables. 
+
+### b. Trying to evaluate categorical variables in traditional linear regression output can be difficult because the p-values are for each categorical dummy variable. To evaluate the inclusion of a variable as a whole, you need a global p-value for each categorical variable.
+
+#### a. Use the “car::Anova” function in R on your linear regression object to get the p-values for each categorical variable.
+
+```{r}
+car::Anova(cars_mlr_1)
+```
+
+#### b. Which of the variables has the highest p-value?
+
+the highest p-values are factor(IntakeValvePerCyl) and factor(VarValveTiming) and both are not signficiant at the 0.05 level. Highest is factor(VarValveTiming) 
+
+
+### c. Rerun the preceding model, but remove the variable with the highest p-value that you found with the “car::Anova” function. Compare the output with the preceding model.
+
+```{r}
+cars_mlr_2 <- lm(FE ~ EngDispl + factor(NumCyl) + factor(Transmission) + factor(AirAspirationMethod) + factor(NumGears) + factor(TransLockup) + factor(TransCreeperGear) + factor(DriveDesc) + factor(IntakeValvePerCyl) + factor(ExhaustValvesPerCyl) + factor(CarlineClassDesc) + factor(VarValveLift), data = cars)
+
+print(car::Anova(cars_mlr_2))
+print(summary(cars_mlr_2))
+```
+
+
+#### a. Did the p-value for the model change notably?
+
+p-value previously: p-value: < 2.2e-16
+p-value now: p-value: < 2.2e-16
+
+No, the p-value didn't change notably. 
+
+
+#### b. Did the R-square and adjusted R-square values change notably?
+
+r-squared before: 0.8333
+adjusted r-squared before: 0.8246
+
+r-squared after: 0.8333
+adjusted r-squared after: 0.8247
+
+No, neither r-squared nor adjusted R-squared changed notably. 
+
+#### c. Did the p-values on other variables change notably?
+
+No, p-values didn't change notably. 
+
+### d. Again, rerun the preceding model (from question c), but eliminate the variable with the highest p-value. Repeat this process of eliminating one variable at a time and rerunning the regression until you only have variables significant at the 0.008 level. Remember to run the model after EACH variable you remove as the p-value might change by removing a variable.
+
+
+```{r}
+cars_mlr_3 <- lm(FE ~ EngDispl + factor(NumCyl) + factor(Transmission) + factor(AirAspirationMethod) + factor(NumGears) + factor(TransCreeperGear) + factor(DriveDesc) + factor(ExhaustValvesPerCyl) + factor(CarlineClassDesc), data = cars)
+
+print(car::Anova(cars_mlr_3))
+print(summary(cars_mlr_3))
+```
+
+
+
+#### a. Did the R-square and adjusted R-square values change notably?
+
+The R-squared value: 0.8303 
+The Adjusted R-Squared Value: 0.8222
+
+Yes, the adjusted r-squared changed because we dropped some variables that weren't significant but still a good amount of the model is explained by the variables included (r-squared)
+
+
+#### b. How many variables did you have left that were significant at the 0.008 level?
+
+There were 9 out of the 13 variables left after removing the insignificant ones at the 0.008 level. 
+

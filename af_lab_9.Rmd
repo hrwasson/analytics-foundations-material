@@ -1,0 +1,87 @@
+---
+title: "af_lab_9"
+author: "Hannah Wasson"
+date: "2024-07-09"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# Diagnostic Testing 
+
+## 1. Using the cars2010 data set, run the regression with the following explanatory variables: EngDispl, Transmission, AirAspirationMethod, TransLockup, TransCreeperGear, DriveDesc, IntakeValvePerCyl, CarlineClassDesc, VarValveLift
+
+```{r}
+library(ggplot2)
+library(tidyverse)
+
+
+```
+
+
+### a. Use plots to identify potential influential observations based on the suggested cutoff values.
+
+Using DFFITS ...
+
+```{r}
+n.index=seq(1,nrow(cars)) 
+cars=cbind(cars,n.index)
+
+lm_full <- lm(FE ~ EngDispl + Transmission + AirAspirationMethod + TransLockup + TransCreeperGear + DriveDesc + IntakeValvePerCyl + CarlineClassDesc + VarValveLift, data = cars)
+
+resid_full_mod <- tibble(residuals(lm_full))
+resid_full_mod %>% arrange(desc(resid_full_mod))
+
+
+length(coefficients(lm_full))
+
+df.cut=2*(sqrt((length(coefficients(lm_full)))/nrow(cars)))
+
+ggplot(lm_full,aes(x=n.index,y=dffits(lm_full))) + geom_point(color="orange")+geom_line(y=df.cut)+geom_line(y=-df.cut)+labs(title = "DFFITS",x="Observation",y="DFFITS")
+
+
+```
+
+### b. Are there any observations with a dffits larger than 1 AND studentized residuals larger than 3 in magnitude? If so, list the observations.
+
+```{r}
+dffits_tib <- tibble(dffits = dffits(lm_full))
+dffits_tib %>%  filter(dffits > 1) %>% arrange(desc(dffits))
+
+```
+
+
+Studentized Residuals:
+
+```{r}
+
+hat.cut=2*(length(coefficients(lm_full)))/nrow(cars)
+
+ggplot(lm_full,aes(x=n.index,y =hatvalues(lm_full)))+geom_point(color="blue")+geom_line(y=hat.cut)+labs(title = "Hat values",x="Observation",y="Hat Values") 
+
+ggplot(lm_full,aes(x=hatvalues(lm_full),y=rstudent(lm_full)))+geom_point(color="orange")+geom_line(y=-3)+geom_line(y=3)+labs(title = "External Studentized Residuals",x="Hat values",y="Residuals") + geom_vline(xintercept = hat.cut)
+
+student_tib <- tibble(student_res = rstudent(lm_full))
+student_gr <- student_tib %>%  filter(student_res > 3) %>% arrange(desc(student_res)) %>% count()
+student_ls <- student_tib %>%  filter(student_res < -3) %>% arrange((student_res)) %>% count()
+
+ggplot(lm.model,aes(x=n.index,y=rstudent(lm.mod
+el)))+geom_point(color="orange")+geom_line(y=-
+3)+geom_line(y=3)+labs(title = "External
+Studentized
+Residuals",x="Observation",y="Residuals")
+
+print(student_gr + student_ls)
+```
+
+
+```{r}
+cooks.cut=4/(nrow(cars2010)-length(coefficients(lm_full))-1)
+ggplot(lm_full,aes(x=n.index,y=cooks.distance(lm_full)))+geom_point(color="orange")+geom_line(y=cooks.cut)+labs(title = "Cook's D",x="Observation",y="Cook's Distance")
+
+cooks_tib <- tibble(cooks_tib_val = cooks.distance(lm_full))
+cooks_tib %>% arrange(desc(cooks_tib_val)) %>% signif(digits=3)
+```
+

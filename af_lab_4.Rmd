@@ -1,0 +1,165 @@
+---
+title: "af_lab_4"
+author: "Hannah Wasson"
+date: "2024-06-28"
+output:
+  pdf_document: default
+  html_document: default
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Fuel Economy Dataset
+
+“The <http://fueleconomy.gov> website, run by the U.S. Department of Energy’s Office of Energy Efficiency and Renewable Energy and the U.S. Environmental Protection Agency, lists different estimates of fuel economy for passenger cars and trucks. For each vehicle, various characteristics are recorded such as the engine displacement or number of cylinders. Along with these values, laboratory measurements are made for the city and highway miles per gallon (MPG) of the car.”
+
+Predictors extracted from the website include: EngDispl, NumCyl, Transmission, AirAspirationMethod, NumGears, TransLockup, TransCreeperGear, DriveDesc, IntakeValvePerCyl, ExhaustValvesPerCyl, CarlineClassDesc, VarValveTiming and VarValveLift. The response variable is FE, which is the unadjusted highway data
+
+To access this data set, you will need to install the AppliedPrectiveModeling library. The following code will produce 3 data sets (cars2010, cars2011 and cars2012, which are the training, validation and test data sets, respectively).
+
+```{r}
+library(AppliedPredictiveModeling)
+library(ggplot2)
+data(FuelEconomy)
+```
+
+#### a. Generate scatter plots and correlations for the variables EngDispl, NumCyl, ExhaustValvesPerCyl and the VarValveTiming versus the target variable, FE.
+
+**- Can linear relationships adequately describe these relationships?**
+
+We can say that there is a linear relationship between FE/EngineDispl
+
+\- Are there any outliers that you should investigate?
+
+yes there are some outliers in the FE/EngineDispl that may have some weight on the linear relationship
+
+**- What variable has the highest correlation with FE?**
+
+Engine Display seems to have the highest correlation with FE.
+
+**- What is the p-value for that correlation coefficient? Is it statistically significant at the 0.05 level? What can you conclude?**
+
+The p-value of the correlation coefficient for this is 2.2e-16. yes, it is statistically significant meaning that we would reject the null meaning that there is a linear relationship. It doesn't tell you about the strength or the direction.
+
+```{r}
+cor(cars2010[, c('EngDispl', 'NumCyl', 'ExhaustValvesPerCyl', 'VarValveTiming', 'FE')])
+pairs(cars2010[, c('EngDispl', 'NumCyl', 'ExhaustValvesPerCyl', 'VarValveTiming', 'FE')])
+ggplot(data = cars2010, aes(x = EngDispl, y = FE, color = 'pink')) + geom_point() + stat_smooth(method = 'lm', formula =  y ~ x, color = 'black', show.legend = FALSE)
+cor.test(cars2010$FE, cars2010$EngDispl)
+```
+
+#### **b. Generate correlations among all of the variables in the previously mentioned variables, minus the target, FE. Are there any notable relationships?**
+
+Yes, there seems to be a notable relationship between engdispl and numcyl
+
+```{r}
+cor(cars2010[, c('EngDispl', 'NumCyl', 'ExhaustValvesPerCyl', 'VarValveTiming')])
+pairs(cars2010[, c('EngDispl', 'NumCyl', 'ExhaustValvesPerCyl', 'VarValveTiming')])
+```
+
+Checking for linearity of the mean (no pattern in the fitted vs. residual plot), variance (residuals vs. fitted in the variance plot), and normality - All fail.
+
+```{r}
+check_cars <- lm(FE ~ EngDispl, data = cars2010)
+ggplot(data = check_cars, aes(x = .fitted, y = .resid)) + geom_point() + geom_hline(yintercept = 0)
+plot(check_cars)
+```
+
+#### Fit a simple linear regression model with FE as the response variable and EngDispl as the predictor.
+
+**- What is the value of the F Statistic and the associated p-value? How would you interpret this with regard to the null hypothesis?**
+
+the F-statistic is 1803 and the p-value is 2.2e-16. Since the p-value is less than the alpha of 0.05 I would reject the null hypothesis and conclude that there is a significant linear relationship between engine display and fuel economy. The F-statistic tests whether or not the y-intercept Bo is equal to or not equal to 0. In this case it is not equal to 0.
+
+**- Write the predicted regression equation.**
+
+y = 50.5632 + -4.5209 X
+
+For a one-unit increase in engine display we would expect fuel economy to decrease by -4.5209 units.
+
+**- What is the value of R-square? How would you interpret this?**
+
+The r-squared is 0.62. this represents the percentage of variation in the linear regression of FE explained by engine display.
+
+```{r}
+car_slm <- lm(FE ~ EngDispl, data = cars2010)
+summary(car_slm)
+```
+
+## Ice Cream Dataset
+
+The IceCream dataset has two columns, sales which gives the total daily sales of a local ice cream shop in hundreds of dollars, and temperature which reflects the daily high temperature.
+
+```{r}
+icecream <- read.csv('https://raw.githubusercontent.com/IAA-Faculty/statistical_foundations/master/icecream.csv')
+str(icecream)
+```
+
+#### Run a regression analysis predicting daily sales from temperature.
+
+**- Are the errors of your model normally distributed? What evidence would you cite here?**
+
+The following plots show the relationship between the means.
+
+variance : residuals are equally distributed and there is no pattern - pass linearity : no pattern shown in the residuals vs. fitted values - pass normality : qq-plot is normally distributed - pass
+
+```{r}
+check_icecream <- lm(Sales ~ Temperature, data = icecream)
+ggplot(data = check_icecream, aes(x = .fitted, y = .resid)) + geom_point() + geom_hline(yintercept = 0)
+ggplot(data = check_icecream, aes(x = .resid)) + geom_histogram()
+plot(check_icecream)
+```
+
+**- Do you see evidence of any relationship between temperature and sales? What statistical evidence (think: p-value) would you cite here?**
+
+Yes the correlation coefficient is 0.7845466 and the p-value is 1.572e-11. We can reject the null to conclude that there is a linear relationship between Temperature and Sales.
+
+```{r}
+cor.test(icecream$Temperature, icecream$Sales)
+ggplot(data = icecream, aes(x = Sales, y = Temperature, fill = 'lightgreen')) + geom_point() + stat_smooth(formula = 'y ~ x', method = 'lm')
+```
+
+**- What is the parameter estimate for temperature in the model equation? Interpret this parameter using a sentence.**
+
+the parameter estimate for temperature is 1.0901. This means that a one-unit increase in temperature is expected to increase ice cream sales by 1.0901 units.
+
+```{r}
+icecream_slm <- lm(Sales ~ Temperature, data = icecream)
+summary(icecream_slm)
+```
+
+## Minneapolis Temperature Dataset
+
+The dataset MinnTemp has information for the daily average temperature for a weather station in Minneapolis (when reading in this data set, be sure to tell it that the separator is a space, i.e. sep=” “). The variables temp and time provide the temperature and time measurements respectively. Time is measured in hours since the study began.
+
+```{r}
+minntemp <- read.csv('https://raw.githubusercontent.com/IAA-Faculty/statistical_foundations/master/minntemp.csv', sep = " ")
+```
+
+#### b. Perform a regression analysis predicting temperature using the time variable.
+
+**- Are the errors of your model normally distributed? What evidence** **would you cite here?**
+
+Yes - the errors in the model are normally distributed based on the QQ-plot
+
+**- Do you see violations of our assumptions for simple linear regression? If so, what problems do you see?**
+
+Yes. Equal variances do not pass the assumptions there is not homogeneity in the residuals. Additionally, there is a pattern in the residuals so it does not pass linearity among residuals.
+
+```{r}
+check_minntemp <- lm(Temp ~ Time, data = minntemp)
+cor.test(minntemp$Time, minntemp$Temp)
+ggplot(data = check_minntemp, aes(x = .fitted, y = .resid)) + geom_point() + geom_hline(yintercept = 0)
+plot(check_minntemp)
+```
+
+**- Is there statistical evidence that time is related to temperature at the confidence level of 0.05? If so, describe the relationship in a sentence, if not discuss what your next steps in this analysis might be.**
+
+```{r}
+minntemp_slm <- lm(Temp ~ Time, data = minntemp)
+summary(minntemp_slm)
+```
+
+No, there is not enough statistical evidence that time is related to temperature at a confidence level of 0.05. We fail to reject the null. A next temp would to be to go in and detect any outliers and see what you can do about cleaning up the data in the pre-processing stage until your assumptions pass.

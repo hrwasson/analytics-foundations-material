@@ -1,0 +1,197 @@
+---
+title: "af_lab_3"
+author: "Hannah Wasson"
+date: "2024-06-27"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# Use the dataset Garlic to perform an ANOVA. This dataset has information on the weight of garlic bulbs (bulbwt) for 32 different garlic plants. Each garlic plant was initially treated with 1 of 4 types of fertilizer. The purpose of the experiment is to determine whether or not there is any difference in the resulting bulb weight when a garlic plant is treated with a different fertilizer.
+
+```{r}
+garlic <- read.csv('https://raw.githubusercontent.com/IAA-Faculty/statistical_foundations/master/garlic.csv')
+
+str(garlic)
+```
+# Test the hypothesis that the means of bulb weight are equal regardless of the fertilizer used.
+# - Verify that the assumption of normality in each sample you are testing. Are you comfortable with this assumption?
+# - Verify that the groups satisfy the assumption of equal variance.
+# - State your conclusion to the hypothesis test (alpha = 0.05)
+
+
+First let's do EDA.. 
+
+```{r}
+library(ggplot2)
+ggplot(data = garlic, aes(x = BulbWt, y = factor(Fertilizer), fill = factor(Fertilizer))) + geom_boxplot() + stat_summary(fun = mean, geom = 'point', size = 5, color = 'red') + scale_fill_brewer(palette = 'Blues') + theme_classic() + labs(title = 'Fertilizer vs. Bulb Weight', x = 'Bulb Weight', y = 'Fertilizer')
+
+```
+There does seem to be a significant difference in the fertilizer type and the bulb weight. 
+
+Let's check for normality amongst the different types. 
+
+```{r}
+library(ggpubr)
+
+mod <- aov(BulbWt ~ Fertilizer, data = garlic)
+ggqqplot(residuals(mod))
+shapiro.test(residuals(mod))
+```
+
+There is normality in the model. 
+
+Let's check for variances... 
+
+```{r}
+
+ggplot(data = mod, aes(x = .fitted, y = .resid)) + geom_point() + geom_hline(yintercept = 0)
+
+```
+
+Check using Levines test... 
+
+```{r}
+```
+
+
+```{r}
+library(stats)
+library(car)
+leveneTest(BulbWt~factor(Fertilizer), data = garlic)
+```
+We fail to reject the null and conclude that there are equal variances. 
+
+So there is normality and equal variances. We can use the basic ANOVA. 
+
+```{r}
+anova_mod <- aov(BulbWt~Fertilizer, data = garlic)
+summary(anova_mod)
+```
+
+With a alpha of 0.05 we can conclude that there is a significant difference in the means between fertilizers and bulb weight. 
+
+# If you were to test if each type of fertilizer were different from each other fertilizer (pairwise), how many hypothesis tests would you be running?
+
+If you are testing each type of fertilizer versus each other fertilizer you would be running 6 different comparisons. 
+
+# If the probability of incorrectly rejecting a true null hypothesis is 0.05, and each hypothesis test is considered independent, what is the probability that you incorrectly reject at least one true hypothesis? How do we solve this problem when we’re performing post-hoc analysis in ANOVA?
+
+1 - (1 - a )^n 
+1 - (1 - 0.05)^6 
+= 0.26
+
+To solve this problem we will want to use the Tukey Games-Howell Dunn test. 
+
+# Which fertilizers are statistically different from each other and which fertilizers do not appear to produce different bulb weights?
+
+```{r}
+garlic_aov = aov(BulbWt ~ factor(Fertilizer), data = garlic)
+garlic_tukey = TukeyHSD(garlic_aov, las = 1)
+print(garlic_tukey)
+plot(garlic_tukey)
+```
+Based on the Tukey test, only fertilizers 4 and 1, and 4 and 3 produce significantly different bulb weights from one another. 3 & 1, 3 & 2, and 4 & 2 don't produce any different in bulb weights. 
+Only two comparisons produce different bulbweights
+
+
+
+# 3. The Bottle dataset contains observations from a factory that is producing plastic water bottles along 3 different assembly lines
+
+```{r}
+bottles <- read.csv('https://raw.githubusercontent.com/IAA-Faculty/statistical_foundations/master/bottle.csv')
+
+str(bottles)
+```
+
+
+First lets do EDA...
+
+```{r}
+ggplot(data = bottles, aes(x = Units, y = factor(Line), fill = factor(Line))) + geom_boxplot() + stat_summary(fun = mean, geom = 'point', size = 5, color = 'red') + scale_fill_brewer(palette = 'Blues') + theme_classic() + labs(title = 'Number of Units Produced within Each Assembly Line', x = 'Units', y = 'Line')
+
+```
+
+It does appear that the number of units are statistically significant from one another. 
+
+```{r}
+qq_mod <- aov(Units ~ Line, data = bottles)
+
+ggqqplot(residuals(qq_mod))
+shapiro.test(residuals(qq_mod))
+
+ggplot(data = bottles, aes(x = Units, fill = factor(Line))) + geom_histogram()  
+
+```
+
+We cannot conclude normality in the distribution of the residuals. We will go right to a Kruskal Wallis test. But first lets check the variances. 
+```{r}
+ggplot(data = qq_mod, aes(x = .fitted, y = .resid)) + geom_point() + geom_hline(yintercept = 0)
+leveneTest(Units~factor(Line), data = bottles)
+```
+We cannot conclude that the variances are equal either. 
+
+```{r}
+kruskal.test(Units ~ Line, data = bottles)
+```
+Since the p-value is less than 0.05 we will reject the null and conclude that there is a significant difference in the units of bottles produced based on the assembly line used. 
+
+Lets check for comparison wise post ANOVA 
+
+```{r}
+library(dunn.test)
+
+dunn.test(bottles$Units, bottles$Line, kw = T, method = "bonferroni")
+
+```
+
+We can't confirm that one line is better than the other but we can say that Line 3 is significantly different than lines 2 and 1. 
+
+
+# The Trials dataset contains information from a clinical trial for blood pressure medicine.
+```{r}
+trials <- read.csv('https://raw.githubusercontent.com/IAA-Faculty/statistical_foundations/master/trials.csv')
+str(trials)
+
+```
+
+Perform EDA
+
+```{r}
+ggplot(data = trials, aes(x = BPChange, y = factor(Treatment), fill = factor(Treatment))) + geom_boxplot() + stat_summary(fun = mean, geom = 'point', size = 5, color = 'red') + scale_fill_brewer(palette = 'Blues') + theme_classic() + labs(title = 'Number of Units Produced within Each Assembly Line', x = 'Units', y = 'Line')
+```
+
+Based on the Exploratory Data Analysis there seems to be a significant difference in the means of the three different drugs. 
+
+Let's look at normality and variances... 
+
+```{r}
+trials_mod <- aov(BPChange ~ Treatment, data = trials)
+
+ggqqplot(residuals(trials_mod))
+shapiro.test(residuals(trials_mod))
+
+ggplot(data = trials_mod, aes(x = .fitted, y = .resid)) + geom_point() + geom_hline(yintercept = 0)
+leveneTest(BPChange~factor(Treatment), data = trials)
+
+```
+
+Cannot assume normality or equal variances. 
+
+Must do a Kruskal Wallis non-parametric test. 
+
+```{r}
+kruskal.test(BPChange ~ Treatment, data = trials)
+```
+
+We can say that there is a significant change in location of the means for the various treatments and BP changes. 
+
+Let's use the Wilcoxon test with a Bonferronin adjustment 
+
+```{r}
+library(PMCMRplus)
+summary(manyOneUTest(x = trials$BPChange, g = as.factor(trials$Treatment), p.adjust.methods = 'bonferroni' ))
+```
+Only the new drug out performes the placebo in blood pressure change. 

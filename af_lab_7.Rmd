@@ -1,0 +1,92 @@
+---
+title: "af_lab_7"
+author: "Hannah Wasson"
+date: "2024-07-05"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# Questions 
+
+## 1. Use the same cars2010 dataset you have used in previous labs. To obtain this data, submit the following code:
+
+```{r}
+library(AppliedPredictiveModeling)
+data(FuelEconomy)
+```
+
+## This dataset has variables pertaining to fuel economy of various cars. Do not create a training and test set. Just use the whole cars2010 dataset for the following analysis. The cars2011 and cars2012 datasets will be used at later time periods.
+
+```{r}
+cars <- cars2010
+str(cars)
+```
+
+
+## Perform the following analysis:
+
+### a. Build a regression model predicting the FE variable using all the remaining variables.Some of these predictor variables are coded as numeric, but should be treated as categorical. The only numeric variables in your dataset should be EngDispl. All remaining variables are categorical. Use forward selection with a 0.1 p-value selection criterion.
+
+```{r}
+empty_model <- lm(FE ~ 1, data = cars)
+full_model <- lm(FE ~ EngDispl + factor(NumCyl) + factor(Transmission) + factor(AirAspirationMethod) + factor(NumGears) + factor(TransLockup) +
+                   factor(TransCreeperGear) + factor(DriveDesc) + factor(IntakeValvePerCyl) + factor(ExhaustValvesPerCyl) + factor(CarlineClassDesc) +
+                   + factor(VarValveTiming) + factor(VarValveLift), data = cars)
+for_model <- step(empty_model, 
+                  scope = list(lower = empty_model, 
+                               upper = full_model), 
+                  direction = "forward", k = qchisq(0.1, 1, lower.tail =  FALSE))
+```
+
+
+#### a. What is the final model?
+
+FE ~ EngDispl + factor(CarlineClassDesc) + factor(NumCyl) + factor(DriveDesc) + 
+    factor(Transmission) + factor(IntakeValvePerCyl) + factor(VarValveLift) + 
+    factor(AirAspirationMethod) + factor(NumGears) + factor(TransLockup) + 
+    factor(TransCreeperGear) + factor(ExhaustValvesPerCyl)
+
+#### b. What was the first variable added?
+
+FE ~ EngDispl
+
+#### c. What was the last variable added?
+
+factor(ExhaustValvesPerCyl)
+
+### b. Instead of the previous approach, now use stepwise selection with a BIC criterion.
+
+```{r}
+
+step_model_bic <- step(empty_model, 
+                  scope = list(lower = empty_model, 
+                               upper = full_model), 
+                  direction = "both", k = log(nrow(cars)))
+
+```
+
+
+#### a. How many variables (not parameter estimates) are left?
+
+5 variables are left 
+
+
+#### b. Are these the same variables as with the forward selection?
+
+Final Model (step BIC): 
+
+FE ~ EngDispl + factor(DriveDesc) + factor(CarlineClassDesc) + 
+    factor(NumCyl) + factor(ExhaustValvesPerCyl) + factor(NumGears) + 
+    factor(AirAspirationMethod) + factor(TransCreeperGear)
+    
+    
+Final Model (forward p-val): 
+
+FE ~ EngDispl + factor(CarlineClassDesc) + factor(NumCyl) + factor(DriveDesc) + 
+    factor(Transmission) + factor(IntakeValvePerCyl) + factor(VarValveLift) + 
+    factor(AirAspirationMethod) + factor(NumGears) + factor(TransLockup) + 
+    factor(TransCreeperGear) + factor(ExhaustValvesPerCyl)
+

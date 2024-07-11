@@ -1,0 +1,21 @@
+---
+title: "AF_Lab2"
+author: "Hannah Wasson"
+date: "2024-06-26"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+# 1. Revisit the NormTemp dataset from Lab 1, where we examined the observed mean body temperature (temperature) in comparison to the well-known “average” of 98.6.
+
+# Perform a statistical test (alpha = 0.05) to determine whether this well- known number is actually the mean body temperature. What is your p-value? Explain in words what this p-value means. What is your conclusion?
+
+```{r}
+library(UsingR)
+data(normtemp)
+
+t.test(normtemp$temperature, mu = 98.6)
